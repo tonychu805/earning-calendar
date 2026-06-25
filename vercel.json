@@ -4,6 +4,6 @@
     { "source": "/macro.json",   "destination": "/api/macro.json"   }
   ],
   "functions": {
-    "api/macro.json.js": { "maxDuration": 30 }
+    "api/macro.json.js": { "maxDuration": 60 }
   }
 }

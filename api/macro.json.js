@@ -83,21 +83,27 @@ Events:
 ${eventList}`;
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000); // 12s hard limit
+
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
       {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             responseMimeType: "application/json",
-            maxOutputTokens: 2048,
+            maxOutputTokens: 1024,
             temperature: 0.2,
           },
+          thinkingConfig: { thinkingBudget: 0 }, // disable thinking for speed
         }),
       }
     );
+    clearTimeout(timeout);
 
     if (!r.ok) {
       const t = await r.text();
@@ -178,16 +184,6 @@ module.exports = async function handler(req, res) {
 
   console.log(`Total events: ${events.length} (${fredEvents.length} from FRED, ${fixedInWindow.length} fixed)`);
 
-  // ── Generate descriptions via Gemini ──
-  if (geminiKey && events.length) {
-    await generateDescriptions(events, geminiKey);
-  }
-
-  const enriched = events.map(e => ({
-    ...e,
-    ...(descCache[`${e.name}::${e.isoDate}`] || { desc:"", implication:"" }),
-  }));
-
   const source = fredKey ? "fred+fixed" : "fixed-only";
-  return res.status(200).json({ source, events: enriched });
+  return res.status(200).json({ source, events });
 };

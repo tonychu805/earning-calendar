@@ -13,11 +13,11 @@ A self-updating ICS calendar feed for stock earnings and key macro events. Subsc
 - **Energy** — XOM, CVX, COP, SLB, EOG and more
 - **Finance** — JPM, GS, BAC, V, MA, BLK and more
 
-**Macro / Fed events** — auto-fetched from the same API:
-- FOMC rate decisions
+**Macro / Fed events** — pulled from multiple sources (see Data Sources below):
+- FOMC rate decisions & meeting dates
 - CPI & PCE inflation releases
 - Nonfarm Payrolls (NFP)
-- GDP, Retail Sales, Durable Goods, ISM PMIs
+- GDP, PPI, Retail Sales
 - Jackson Hole Symposium
 
 ---
@@ -85,7 +85,10 @@ earning-calendar/
 
 ## Data sources
 
-- **Earnings** — [Financial Modeling Prep](https://financialmodelingprep.com) (free tier)
-- **Economic release dates** — [FRED API](https://fred.stlouisfed.org/docs/api/fred/) (free, Federal Reserve Bank of St. Louis)
-- **FOMC / Jackson Hole** — hardcoded annually from [federalreserve.gov](https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm)
-- **Event descriptions** — Google Gemini (`gemini-2.5-flash`)
+| Data | Source | Notes |
+|---|---|---|
+| Earnings dates | [Financial Modeling Prep](https://financialmodelingprep.com) | Free tier; 90-day rolling window |
+| CPI, NFP, PCE, GDP, PPI, Retail Sales dates | [FRED API](https://fred.stlouisfed.org/docs/api/fred/) | Free; Federal Reserve Bank of St. Louis |
+| FOMC meeting dates | [federalreserve.gov](https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm) | Hardcoded annually (Fed publishes Dec each year) |
+| Jackson Hole dates | [kansascityfed.org](https://www.kansascityfed.org/research/jackson-hole-economic-symposium/) | Hardcoded annually |
+| Event descriptions & market implications | [Google Gemini](https://aistudio.google.com) (`gemini-2.5-flash`) | Generated per release; cached in-memory |
