@@ -106,10 +106,9 @@ async function generateDescriptions(events, seriesData, geminiKey) {
 
 For each economic indicator below, return a JSON array where each object has:
 - "key": the exact indicator name (e.g. "CPI")
-- "desc": 1 sentence — what this release measures and what markets are watching given the recent trend shown.
-- "implication": 1 sentence — likely market reaction (equities, rates, USD) if the next print comes in hotter vs cooler than expected.
+- "implication": 1 sentence — given the recent trend, what is the likely market reaction (equities, rates, USD) if the next print comes in hotter vs cooler than expected. Be specific to the current data, not generic.
 
-Be specific to the current data — not generic textbook definitions. JSON array only, no markdown.
+JSON array only, no markdown.
 
 Indicators:
 ${eventList}`;
@@ -162,8 +161,8 @@ ${eventList}`;
     }
 
     for (const item of parsed) {
-      if (item?.key && item?.desc && item?.implication) {
-        descCache[item.key] = { desc: item.desc, implication: item.implication };
+      if (item?.key && item?.implication) {
+        descCache[item.key] = { desc: "", implication: item.implication };
       }
     }
     lastGeminiDebug = { stage: "ok", keys: Object.keys(descCache) };

@@ -302,13 +302,6 @@
   .ind-prior-block { display: flex; flex-direction: column; }
   .ind-prior-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
   .ind-prior-val   { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
-  .ind-desc {
-    font-size: 0.75rem;
-    color: #7a8fa8;
-    line-height: 1.5;
-    border-top: 1px solid var(--border);
-    padding-top: 8px;
-  }
   .ind-impl {
     font-size: 0.73rem;
     color: #7a8fa8;
@@ -317,7 +310,53 @@
     background: rgba(251,191,36,0.04);
     border-left: 2px solid rgba(251,191,36,0.25);
     border-radius: 0 5px 5px 0;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 2px;
   }
+
+  /* ── Tooltip ── */
+  .tooltip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    color: var(--muted);
+    font-size: 0.6rem;
+    font-weight: 700;
+    cursor: default;
+    margin-left: 5px;
+    flex-shrink: 0;
+    line-height: 1;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .tooltip-box {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a2540;
+    border: 1px solid rgba(96,165,250,0.2);
+    border-radius: 8px;
+    padding: 8px 11px;
+    font-size: 0.73rem;
+    color: #a0b4cc;
+    line-height: 1.5;
+    width: 210px;
+    z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .tooltip-wrap:hover .tooltip-box { display: block; }
 
   /* ── Tag chips ── */
   .fed-tag {
@@ -551,6 +590,16 @@ function renderTickers() {
   document.getElementById('tickerGrid').innerHTML = list.map(t => `<span class="ticker">${t}</span>`).join('');
 }
 
+// Hardcoded indicator descriptions (shown in tooltip)
+const INDICATOR_DESC = {
+  "CPI":             "Measures the average change in prices paid by consumers for goods and services — the primary gauge of consumer inflation tracked by the Fed.",
+  "Nonfarm Payrolls":"Reports the monthly change in employment outside the farm sector — the single most market-moving U.S. economic release.",
+  "PCE Inflation":   "The Fed's preferred inflation measure, tracking consumer spending prices including healthcare; directly influences rate decisions.",
+  "GDP":             "Measures the total value of goods and services produced; the quarterly growth rate indicates overall economic health.",
+  "PPI":             "Tracks price changes from the seller's perspective, serving as a leading indicator for future consumer inflation.",
+  "Retail Sales":    "Measures consumer spending on retail goods — a key indicator of demand strength and economic momentum.",
+};
+
 // Macro — fetched live from /macro.json
 async function loadMacro() {
   try {
@@ -577,12 +626,19 @@ function renderIndicators(events) {
 
   if (!indicators.length) { grid.innerHTML = '<div class="fed-loading">No data.</div>'; return; }
 
-  grid.innerHTML = indicators.map(e => `
+  grid.innerHTML = indicators.map(e => {
+    const desc = INDICATOR_DESC[e.name] || '';
+    return `
     <div class="ind-card">
       <div class="ind-header">
         <div class="ind-name-row">
           <span class="ind-icon">${e.icon}</span>
           <span class="ind-name">${e.name}</span>
+          ${desc ? `
+          <div class="tooltip-wrap">
+            <span class="tooltip-icon">!</span>
+            <div class="tooltip-box">${desc}</div>
+          </div>` : ''}
         </div>
         <span class="fed-tag ${e.cls}">${e.tag}</span>
       </div>
@@ -594,9 +650,9 @@ function renderIndicators(events) {
           <span class="ind-prior-val">${e.prior}</span>
         </div>` : ''}
       </div>
-      ${e.desc ? `<div class="ind-desc">${e.desc}</div>` : ''}
       ${e.implication ? `<div class="ind-impl">${e.implication}</div>` : ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderUpcoming(events) {
