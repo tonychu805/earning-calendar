@@ -2,5 +2,8 @@
   "rewrites": [
     { "source": "/calendar.ics", "destination": "/api/calendar.ics" },
     { "source": "/macro.json",   "destination": "/api/macro.json"   }
-  ]
+  ],
+  "functions": {
+    "api/macro.json.js": { "maxDuration": 30 }
+  }
 }

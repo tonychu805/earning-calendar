@@ -77,7 +77,7 @@ Sort by isoDate ascending. Return only a valid JSON array, no markdown.`;
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
-          maxOutputTokens: 4000,
+          maxOutputTokens: 8192,
           temperature: 0.2,
         },
       }),
