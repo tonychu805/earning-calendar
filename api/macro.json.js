@@ -20,19 +20,22 @@ const FRED_RELEASES = [
 
 // ── FRED: fetch release dates for a single release ───────────────
 async function fetchReleaseDates(release, fredKey, from, to) {
-  // Note: do NOT use realtime_start/end — those filter by vintage period, not release date.
-  // Fetch all dates (sorted desc, limited to recent) then filter by date field.
+  // include_release_dates_with_no_data=true is required to get future scheduled dates
+  // (default=false excludes them since data hasn't been published yet)
+  // Sort desc + limit=12 captures recent past + upcoming; we then filter by date field.
   const url = `https://api.stlouisfed.org/fred/release/dates`
     + `?release_id=${release.id}`
     + `&sort_order=desc`
-    + `&limit=20`
-    + `&include_release_dates_with_no_data=false`
+    + `&limit=12`
+    + `&include_release_dates_with_no_data=true`
     + `&api_key=${fredKey}`
     + `&file_type=json`;
 
   const r    = await fetch(url);
   if (!r.ok) throw new Error(`FRED HTTP ${r.status} for release ${release.id}`);
   const data = await r.json();
+  // DEBUG: log raw response to understand structure
+  if (release.id === 10) console.log("FRED raw (CPI):", JSON.stringify(data).slice(0, 500));
   const dates = (data.release_dates || [])
     .map(d => d.date || d.release_date)
     .filter(d => d >= from && d <= to);
