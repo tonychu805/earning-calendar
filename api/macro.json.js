@@ -27,10 +27,8 @@ const FRED_SERIES = {
   "Retail Sales":    { id:"RSAFS",           units:"pc1", suffix:"%" },
 };
 
-// ── In-memory Gemini cache (keyed by event name only) ─────────────
-// Descriptions are per indicator type, not per date — CPI context is
-// the same whether the release is in July or August.
 const descCache = {};
+let lastGeminiDebug = null; // temporary debug
 
 // ── Fetch upcoming release dates for one release ──────────────────
 async function fetchReleaseDates(release, fredKey, from, to) {
@@ -118,7 +116,7 @@ ${eventList}`;
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
@@ -133,7 +131,6 @@ ${eventList}`;
             maxOutputTokens: 1024,
             temperature: 0.2,
           },
-          thinkingConfig: { thinkingBudget: 0 },
         }),
       }
     );
@@ -141,33 +138,37 @@ ${eventList}`;
 
     if (!r.ok) {
       const errText = await r.text();
-      console.error("Gemini HTTP", r.status, errText.slice(0, 400));
+      lastGeminiDebug = { stage: "http_error", status: r.status, body: errText.slice(0, 400) };
       return;
     }
 
     const data = await r.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {
-      console.error("Gemini no text. Raw:", JSON.stringify(data).slice(0, 400));
+      lastGeminiDebug = { stage: "no_text", raw: JSON.stringify(data).slice(0, 400) };
       return;
     }
 
-    console.log("Gemini raw:", text.slice(0, 300));
-
     let parsed;
     try { parsed = JSON.parse(text); }
-    catch(e) { console.error("Gemini JSON parse error:", e.message, text.slice(0, 200)); return; }
+    catch(e) {
+      lastGeminiDebug = { stage: "json_parse_error", error: e.message, text: text.slice(0, 300) };
+      return;
+    }
 
-    if (!Array.isArray(parsed)) { console.error("Gemini not array"); return; }
+    if (!Array.isArray(parsed)) {
+      lastGeminiDebug = { stage: "not_array", text: text.slice(0, 200) };
+      return;
+    }
 
     for (const item of parsed) {
       if (item?.key && item?.desc && item?.implication) {
         descCache[item.key] = { desc: item.desc, implication: item.implication };
       }
     }
-    console.log(`Gemini OK: ${Object.keys(descCache).length} cached. Keys: ${Object.keys(descCache).join(", ")}`);
+    lastGeminiDebug = { stage: "ok", keys: Object.keys(descCache) };
   } catch (err) {
-    console.error("Gemini exception:", err.message);
+    lastGeminiDebug = { stage: "exception", error: err.message };
   }
 }
 
@@ -248,5 +249,5 @@ module.exports = async function handler(req, res) {
     ...(descCache[e.name] || { desc:"", implication:"" }),
   }));
 
-  return res.status(200).json({ source:"fred+gemini", events: enriched });
+  return res.status(200).json({ source:"fred+gemini", events: enriched, _debug: lastGeminiDebug });
 };
