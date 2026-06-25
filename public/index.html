@@ -537,8 +537,8 @@ function renderMacro(events) {
 
   el.innerHTML = events.map((e, i) => {
     const stats = [
-      e.estimate != null ? `<span class="fed-stat">Estimate <strong>${e.estimate}</strong></span>` : '',
-      e.previous  != null ? `<span class="fed-stat">Previous <strong>${e.previous}</strong></span>`  : '',
+      e.previous != null ? `<span class="fed-stat">Last <strong>${e.previous}</strong></span>`   : '',
+      e.prior    != null ? `<span class="fed-stat">Prior <strong>${e.prior}</strong></span>`     : '',
     ].filter(Boolean).join('');
 
     return `
