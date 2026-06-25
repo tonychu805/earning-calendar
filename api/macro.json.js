@@ -20,11 +20,12 @@ const FRED_RELEASES = [
 
 // ── FRED: fetch release dates for a single release ───────────────
 async function fetchReleaseDates(release, fredKey, from, to) {
+  // Note: do NOT use realtime_start/end — those filter by vintage period, not release date.
+  // Fetch all dates (sorted desc, limited to recent) then filter by date field.
   const url = `https://api.stlouisfed.org/fred/release/dates`
     + `?release_id=${release.id}`
-    + `&realtime_start=${from}`
-    + `&realtime_end=${to}`
-    + `&sort_order=asc`
+    + `&sort_order=desc`
+    + `&limit=20`
     + `&include_release_dates_with_no_data=false`
     + `&api_key=${fredKey}`
     + `&file_type=json`;
