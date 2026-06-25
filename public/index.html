@@ -290,18 +290,13 @@
   .ind-name  { font-size: 0.8rem; font-weight: 600; color: var(--text); }
   .ind-readings {
     display: flex;
-    gap: 14px;
-    align-items: baseline;
+    gap: 20px;
+    align-items: flex-end;
   }
-  .ind-last {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
-  .ind-prior-block { display: flex; flex-direction: column; }
-  .ind-prior-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-  .ind-prior-val   { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+  .ind-val-block { display: flex; flex-direction: column; gap: 2px; }
+  .ind-val-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .ind-last      { font-size: 1.35rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
+  .ind-prior-val { font-size: 1.35rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1; }
   .ind-impl {
     font-size: 0.73rem;
     color: #7a8fa8;
@@ -643,10 +638,13 @@ function renderIndicators(events) {
         <span class="fed-tag ${e.cls}">${e.tag}</span>
       </div>
       <div class="ind-readings">
-        <div class="ind-last">${e.previous ?? '—'}</div>
+        <div class="ind-val-block">
+          <span class="ind-val-label">Last</span>
+          <span class="ind-last">${e.previous ?? '—'}</span>
+        </div>
         ${e.prior != null ? `
-        <div class="ind-prior-block">
-          <span class="ind-prior-label">Prior</span>
+        <div class="ind-val-block">
+          <span class="ind-val-label">Prior</span>
           <span class="ind-prior-val">${e.prior}</span>
         </div>` : ''}
       </div>
