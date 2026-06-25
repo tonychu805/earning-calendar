@@ -22,35 +22,6 @@ for (const [name, tickers] of Object.entries(SECTORS)) {
   for (const t of tickers) SECTOR_MAP[t] = name;
 }
 
-// Map FMP economic event names → display label + icon
-// Matched via substring (case-insensitive)
-const MACRO_FILTERS = [
-  { match:"fed interest rate",    icon:"🏛️", label:"Fed Rate Decision"         },
-  { match:"fomc",                 icon:"🏛️", label:"FOMC"                      },
-  { match:"federal open market",  icon:"🏛️", label:"FOMC"                      },
-  { match:"consumer price index", icon:"📊", label:"CPI"                       },
-  { match:"cpi ",                 icon:"📊", label:"CPI"                       },
-  { match:"nonfarm payroll",      icon:"💼", label:"Nonfarm Payrolls (NFP)"    },
-  { match:"non farm payroll",     icon:"💼", label:"Nonfarm Payrolls (NFP)"    },
-  { match:"unemployment rate",    icon:"💼", label:"Unemployment Rate"         },
-  { match:"personal consumption", icon:"📉", label:"PCE Inflation"             },
-  { match:"pce",                  icon:"📉", label:"PCE"                       },
-  { match:"core pce",             icon:"📉", label:"Core PCE"                  },
-  { match:"gdp",                  icon:"📈", label:"GDP"                       },
-  { match:"jackson hole",         icon:"🏔️",  label:"Jackson Hole Symposium"   },
-  { match:"retail sales",         icon:"🛒", label:"Retail Sales"              },
-  { match:"producer price",       icon:"📊", label:"PPI"                       },
-  { match:"ppi",                  icon:"📊", label:"PPI"                       },
-  { match:"ism manufacturing",    icon:"🏭", label:"ISM Manufacturing PMI"     },
-  { match:"ism services",         icon:"🏭", label:"ISM Services PMI"          },
-  { match:"durable goods",        icon:"📦", label:"Durable Goods Orders"      },
-  { match:"initial jobless",      icon:"💼", label:"Initial Jobless Claims"    },
-];
-
-function matchMacro(eventName) {
-  const lower = (eventName||"").toLowerCase();
-  return MACRO_FILTERS.find(f => lower.includes(f.match));
-}
 
 const ymd = d => d.slice(0,10).replace(/-/g,"");
 const addDay = d => {
@@ -74,20 +45,36 @@ const DEMO_EARNINGS = [
   {symbol:"CVX",date:"2026-08-01",fiscalDateEnding:"2026-06-30",epsEstimated:"2.45",time:"bmo",sector:"Energy"},
 ];
 
-// Hardcoded macro fallback (used when economic calendar API is unavailable)
-const DEMO_MACRO = [
-  { date:"2026-07-02", summary:"💼 Jobs Report — June NFP",           desc:"Bureau of Labor Statistics: June nonfarm payrolls." },
-  { date:"2026-07-10", summary:"📊 CPI — June Inflation",             desc:"BLS Consumer Price Index for June 2026." },
-  { date:"2026-07-29", summary:"🏛️ FOMC Decision & Press Conference",  desc:"Fed interest rate decision." },
-  { date:"2026-07-31", summary:"📉 PCE Inflation — June",             desc:"BEA PCE price index for June 2026." },
-  { date:"2026-08-07", summary:"💼 Jobs Report — July NFP",           desc:"Bureau of Labor Statistics: July nonfarm payrolls." },
-  { date:"2026-08-12", summary:"📊 CPI — July Inflation",             desc:"BLS Consumer Price Index for July 2026." },
-  { date:"2026-08-27", summary:"🏔️ Jackson Hole Symposium",            desc:"Kansas City Fed Annual Economic Policy Symposium." },
-  { date:"2026-08-29", summary:"📉 PCE Inflation — July",             desc:"BEA PCE price index for July 2026." },
-  { date:"2026-09-05", summary:"💼 Jobs Report — August NFP",         desc:"Bureau of Labor Statistics: August nonfarm payrolls." },
-  { date:"2026-09-11", summary:"📊 CPI — August Inflation",           desc:"BLS Consumer Price Index for August 2026." },
-  { date:"2026-09-17", summary:"🏛️ FOMC Decision & Press Conference",  desc:"Fed interest rate decision." },
+// FRED release IDs for macro events (mirrors macro.json.js)
+const FRED_RELEASES = [
+  { id: 10, icon:"📊", label:"CPI"              },
+  { id: 50, icon:"💼", label:"Nonfarm Payrolls" },
+  { id: 54, icon:"📉", label:"PCE Inflation"    },
+  { id: 53, icon:"📈", label:"GDP"              },
+  { id: 46, icon:"📊", label:"PPI"              },
+  { id: 9,  icon:"🛒", label:"Retail Sales"     },
 ];
+
+async function fetchFredMacro(fredKey, from, to) {
+  const results = await Promise.allSettled(
+    FRED_RELEASES.map(async r => {
+      const url = `https://api.stlouisfed.org/fred/release/dates`
+        + `?release_id=${r.id}&sort_order=desc&limit=12`
+        + `&include_release_dates_with_no_data=true`
+        + `&api_key=${fredKey}&file_type=json`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      return (data.release_dates || [])
+        .map(d => d.date || d.release_date)
+        .filter(d => d >= from && d <= to)
+        .map(date => ({ date, summary:`${r.icon} ${r.label}`, desc:`${r.label} economic data release.` }));
+    })
+  );
+
+  return results
+    .flatMap(r => r.status === "fulfilled" ? r.value : [])
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
 
 // ── ICS event builders ───────────────────────────────────────────
 function earningsVevent(e, ts) {
@@ -144,31 +131,25 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin","*");
   res.setHeader("Cache-Control","public, max-age=3600, s-maxage=3600");
 
-  const apiKey = process.env.FMP_API_KEY;
+  const fmpKey  = process.env.FMP_API_KEY;
+  const fredKey = process.env.FRED_API_KEY;
   const ts = stamp();
-
-  if (!apiKey) {
-    const demoMacro = DEMO_MACRO.map(e => macroVevent(e, ts));
-    return res.status(200).send(ics([...DEMO_EARNINGS.map(e=>earningsVevent(e,ts)), ...demoMacro]));
-  }
 
   const today = new Date();
   const from  = today.toISOString().slice(0,10);
   const to    = new Date(today.getTime()+90*86400000).toISOString().slice(0,10);
 
-  // Fetch earnings and economic calendar in parallel
+  // Fetch earnings (FMP) + macro dates (FRED) in parallel
   const [earningsResult, macroResult] = await Promise.allSettled([
-    fetchEarnings(apiKey, from, to),
-    fetchMacro(apiKey, from, to),
+    fmpKey  ? fetchEarnings(fmpKey, from, to)    : Promise.resolve(DEMO_EARNINGS),
+    fredKey ? fetchFredMacro(fredKey, from, to)  : Promise.resolve([]),
   ]);
 
-  const earningsEvents = earningsResult.status==="fulfilled"
-    ? earningsResult.value.map(e => earningsVevent(e, ts))
-    : DEMO_EARNINGS.map(e => earningsVevent(e, ts));
+  const earningsEvents = (earningsResult.status==="fulfilled" ? earningsResult.value : DEMO_EARNINGS)
+    .map(e => earningsVevent(e, ts));
 
-  const macroEvents = macroResult.status==="fulfilled" && macroResult.value.length > 0
-    ? macroResult.value.map(e => macroVevent(e, ts))
-    : DEMO_MACRO.map(e => macroVevent(e, ts));   // fallback to hardcoded
+  const macroEvents = (macroResult.status==="fulfilled" ? macroResult.value : [])
+    .map(e => macroVevent(e, ts));
 
   return res.status(200).send(ics([...earningsEvents, ...macroEvents]));
 };
@@ -206,55 +187,3 @@ async function fetchEarnings(apiKey, from, to) {
   return events;
 }
 
-// ── Economic calendar fetch ──────────────────────────────────────
-async function fetchMacro(apiKey, from, to) {
-  // Try stable endpoint, then v3
-  const stableUrl = `https://financialmodelingprep.com/stable/economic-calendar?from=${from}&to=${to}&apikey=${apiKey}`;
-  const v3Url     = `https://financialmodelingprep.com/api/v3/economic_calendar?from=${from}&to=${to}&apikey=${apiKey}`;
-
-  let r = await fetch(stableUrl);
-  let data = await r.json();
-
-  if (!Array.isArray(data)) {
-    console.error("Economic calendar stable endpoint failed:", JSON.stringify(data).slice(0,150));
-    r = await fetch(v3Url);
-    data = await r.json();
-  }
-
-  if (!Array.isArray(data)) throw new Error("Bad economic calendar response: "+JSON.stringify(data).slice(0,100));
-
-  const seen = new Set();
-  const events = [];
-
-  for (const row of data) {
-    // Only US high-impact events
-    if ((row.country||"").toUpperCase() !== "US") continue;
-    if ((row.impact||"").toLowerCase() !== "high") continue;
-
-    const macro = matchMacro(row.event);
-    if (!macro) continue;
-
-    const date = (row.date||"").slice(0,10);
-    if (!date||!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-
-    // Deduplicate same event on same date
-    const key = `${date}:${macro.label}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    // Build description from available fields
-    const parts = [row.event];
-    if (row.estimate!=null) parts.push(`Estimate: ${row.estimate}`);
-    if (row.previous!=null) parts.push(`Previous: ${row.previous}`);
-
-    events.push({
-      date,
-      summary: `${macro.icon} ${macro.label}`,
-      desc: parts.join(" | "),
-    });
-  }
-
-  // Sort chronologically
-  events.sort((a,b) => a.date.localeCompare(b.date));
-  return events;
-}
