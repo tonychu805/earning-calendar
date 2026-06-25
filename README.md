@@ -40,14 +40,18 @@ ICS URL: `https://earning-calendar-chi.vercel.app/calendar.ics`
 ```
 GET /calendar.ics
   ├── fetch FMP /stable/earnings-calendar  (next 90 days)
-  ├── fetch FMP /stable/economic-calendar  (next 90 days, US High-impact only)
   └── return merged ICS with REFRESH-INTERVAL:P1D
+
+GET /macro.json
+  ├── fetch FRED API — CPI, NFP, PCE, GDP, PPI, Retail Sales release dates
+  ├── hardcoded    — FOMC meetings + Jackson Hole (Fed publishes annually)
+  ├── call Gemini  — time-sensitive 1-sentence descriptions per event
+  └── return enriched JSON sorted by date
 ```
 
-- Deployed as a Vercel Serverless Function (Node.js)
-- FMP free tier API key stored as `FMP_API_KEY` environment variable in Vercel
-- Falls back to hardcoded demo events if the API key is missing or the request fails
-- Calendar clients re-fetch the URL daily per the `REFRESH-INTERVAL` header
+- Deployed as Vercel Serverless Functions (Node.js)
+- API keys stored as environment variables in Vercel (never in code)
+- Calendar clients re-fetch the ICS daily per the `REFRESH-INTERVAL` header
 
 ---
 
@@ -56,10 +60,11 @@ GET /calendar.ics
 ```
 earning-calendar/
 ├── api/
-│   └── calendar.ics.js   # Serverless function — earnings + macro ICS generator
+│   ├── calendar.ics.js   # ICS feed — earnings
+│   └── macro.json.js     # Macro events — FRED + FOMC + Gemini descriptions
 ├── public/
 │   └── index.html        # Landing page
-└── vercel.json           # Route /calendar.ics → /api/calendar.ics
+└── vercel.json           # Routes + function config
 ```
 
 ---
@@ -67,14 +72,20 @@ earning-calendar/
 ## Deploy your own
 
 1. Fork this repo
-2. Import into [Vercel](https://vercel.com) — it auto-detects the serverless function
-3. Add your [FMP API key](https://financialmodelingprep.com/developer/docs) as an environment variable:
-   - Key: `FMP_API_KEY`
-   - Value: your key
-4. Deploy — your personal ICS URL will be `https://<your-project>.vercel.app/calendar.ics`
+2. Import into [Vercel](https://vercel.com)
+3. Add environment variables:
+   | Key | Source |
+   |---|---|
+   | `FMP_API_KEY` | [financialmodelingprep.com](https://financialmodelingprep.com/developer/docs) |
+   | `FRED_API_KEY` | [fred.stlouisfed.org/docs/api/api_key.html](https://fred.stlouisfed.org/docs/api/api_key.html) (free) |
+   | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) (free tier) |
+4. Deploy — your ICS URL: `https://<your-project>.vercel.app/calendar.ics`
 
 ---
 
-## Data source
+## Data sources
 
-Earnings and economic calendar data provided by [Financial Modeling Prep](https://financialmodelingprep.com). Free tier covers the features used here.
+- **Earnings** — [Financial Modeling Prep](https://financialmodelingprep.com) (free tier)
+- **Economic release dates** — [FRED API](https://fred.stlouisfed.org/docs/api/fred/) (free, Federal Reserve Bank of St. Louis)
+- **FOMC / Jackson Hole** — hardcoded annually from [federalreserve.gov](https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm)
+- **Event descriptions** — Google Gemini (`gemini-2.5-flash`)
