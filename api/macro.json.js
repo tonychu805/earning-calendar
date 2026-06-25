@@ -139,24 +139,35 @@ ${eventList}`;
     );
     clearTimeout(timeout);
 
-    if (!r.ok) { console.error("Gemini HTTP", r.status); return; }
+    if (!r.ok) {
+      const errText = await r.text();
+      console.error("Gemini HTTP", r.status, errText.slice(0, 400));
+      return;
+    }
 
-    const data   = await r.json();
-    const text   = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) { console.error("No Gemini text"); return; }
+    const data = await r.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      console.error("Gemini no text. Raw:", JSON.stringify(data).slice(0, 400));
+      return;
+    }
 
-    const parsed = JSON.parse(text);
-    if (!Array.isArray(parsed)) return;
+    console.log("Gemini raw:", text.slice(0, 300));
+
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch(e) { console.error("Gemini JSON parse error:", e.message, text.slice(0, 200)); return; }
+
+    if (!Array.isArray(parsed)) { console.error("Gemini not array"); return; }
 
     for (const item of parsed) {
       if (item?.key && item?.desc && item?.implication) {
         descCache[item.key] = { desc: item.desc, implication: item.implication };
       }
     }
-    console.log(`Gemini: cached ${parsed.length} descriptions`);
-    console.log(`Gemini: cached ${parsed.length} descriptions`);
+    console.log(`Gemini OK: ${Object.keys(descCache).length} cached. Keys: ${Object.keys(descCache).join(", ")}`);
   } catch (err) {
-    console.error("Gemini failed:", err.message);
+    console.error("Gemini exception:", err.message);
   }
 }
 
