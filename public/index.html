@@ -261,79 +261,101 @@
     cursor: pointer;
     transition: border-color 0.15s;
   }
-  .fed-item:hover { border-color: rgba(248,113,113,0.25); }
-  .fed-item.open  { border-color: rgba(248,113,113,0.25); }
+  /* ── Indicator cards grid ── */
+  .indicator-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 0;
+  }
+  @media (max-width: 640px) { .indicator-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 400px) { .indicator-grid { grid-template-columns: 1fr; } }
 
-  .fed-row { display: flex; align-items: center; gap: 12px; }
-  .fed-date {
-    font-family: 'SF Mono','Fira Code',monospace;
+  .ind-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ind-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ind-name-row { display: flex; align-items: center; gap: 7px; }
+  .ind-icon  { font-size: 1rem; }
+  .ind-name  { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+  .ind-readings {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+  }
+  .ind-last {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .ind-prior-block { display: flex; flex-direction: column; }
+  .ind-prior-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .ind-prior-val   { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+  .ind-desc {
     font-size: 0.75rem;
-    color: var(--muted);
-    min-width: 56px;
-    flex-shrink: 0;
+    color: #7a8fa8;
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
   }
-  .fed-icon { font-size: 1rem; flex-shrink: 0; }
-  .fed-name { font-weight: 500; font-size: 0.88rem; flex: 1; }
-  .fed-chevron {
-    color: var(--muted);
-    font-size: 0.65rem;
-    transition: transform 0.2s;
-    flex-shrink: 0;
+  .ind-impl {
+    font-size: 0.73rem;
+    color: #7a8fa8;
+    line-height: 1.45;
+    padding: 6px 10px;
+    background: rgba(251,191,36,0.04);
+    border-left: 2px solid rgba(251,191,36,0.25);
+    border-radius: 0 5px 5px 0;
   }
-  .fed-item.open .fed-chevron { transform: rotate(180deg); }
 
+  /* ── Tag chips ── */
   .fed-tag {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 3px 8px;
+    padding: 2px 7px;
     border-radius: 5px;
     flex-shrink: 0;
   }
-  .tag-fomc   { background: rgba(248,113,113,0.1); color: var(--red);    border: 1px solid rgba(248,113,113,0.2); }
   .tag-cpi    { background: rgba(251,191,36,0.1);  color: var(--amber);  border: 1px solid rgba(251,191,36,0.2); }
   .tag-jobs   { background: rgba(52,211,153,0.1);  color: var(--green);  border: 1px solid rgba(52,211,153,0.2); }
-  .tag-pce    { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.2);}
+  .tag-pce    { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+  .tag-fomc   { background: rgba(248,113,113,0.1); color: var(--red);    border: 1px solid rgba(248,113,113,0.2); }
   .tag-jhole  { background: rgba(96,165,250,0.1);  color: var(--blue);   border: 1px solid rgba(96,165,250,0.2); }
 
-  .fed-detail {
-    display: none;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
+  /* ── Upcoming dates list ── */
+  .upcoming-list { display: flex; flex-direction: column; gap: 2px; }
+  .upcoming-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    transition: background 0.12s;
   }
-  .fed-item.open .fed-detail { display: block; }
+  .upcoming-item:hover { background: var(--surface2); }
+  .upcoming-date {
+    font-family: 'SF Mono','Fira Code',monospace;
+    font-size: 0.73rem;
+    color: var(--muted);
+    min-width: 52px;
+    flex-shrink: 0;
+  }
+  .upcoming-icon { font-size: 0.9rem; flex-shrink: 0; }
+  .upcoming-name { font-size: 0.84rem; font-weight: 500; flex: 1; }
 
-  .fed-stat-row { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
-  .fed-stat     { font-size: 0.74rem; color: var(--muted); }
-  .fed-stat strong { color: var(--text); font-weight: 600; }
-
-  .fed-section-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-  .fed-section-label.what { color: var(--blue); }
-  .fed-section-label.why  { color: var(--amber); }
-
-  .fed-desc-text {
-    font-size: 0.8rem;
-    color: #8b9cb8;
-    line-height: 1.55;
-    margin-bottom: 10px;
-  }
-  .fed-impl-text {
-    font-size: 0.8rem;
-    color: #8b9cb8;
-    line-height: 1.55;
-    padding: 8px 12px;
-    background: rgba(251,191,36,0.04);
-    border-left: 2px solid rgba(251,191,36,0.3);
-    border-radius: 0 6px 6px 0;
-  }
   .fed-loading { text-align:center; padding:2rem; color:var(--muted); font-size:0.83rem; }
 
   /* ── Section header ── */
@@ -452,14 +474,26 @@
     <div class="ticker-grid" id="tickerGrid"></div>
   </div>
 
-  <!-- Fed Dates -->
+  <!-- Macro Indicators -->
   <div class="card">
     <div class="section-header">
-      <div class="section-title">Key Macro Dates</div>
+      <div class="section-title">Macro Indicators</div>
+      <div class="section-meta">Latest readings</div>
+    </div>
+    <div class="indicator-grid" id="indicatorGrid">
+      <div class="fed-loading">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Upcoming Dates -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Upcoming Releases</div>
       <div class="section-meta">Next 90 days</div>
     </div>
-
-    <div class="fed-list" id="fedList"></div>
+    <div class="upcoming-list" id="upcomingList">
+      <div class="fed-loading">Loading…</div>
+    </div>
   </div>
 
   <footer>
@@ -517,53 +551,66 @@ function renderTickers() {
   document.getElementById('tickerGrid').innerHTML = list.map(t => `<span class="ticker">${t}</span>`).join('');
 }
 
-// Fed dates — fetched live from /macro.json
+// Macro — fetched live from /macro.json
 async function loadMacro() {
-  const el = document.getElementById('fedList');
-  el.innerHTML = '<div class="fed-loading">Loading macro events…</div>';
   try {
     const today = new Date().toISOString().slice(0, 10);
     const res  = await fetch('/macro.json?d=' + today);
     const json = await res.json();
-    renderMacro(json.events || []);
+    renderIndicators(json.events || []);
+    renderUpcoming(json.events || []);
   } catch(e) {
-    el.innerHTML = '<div class="fed-loading">Could not load macro events.</div>';
+    document.getElementById('indicatorGrid').innerHTML = '<div class="fed-loading">Could not load data.</div>';
+    document.getElementById('upcomingList').innerHTML  = '<div class="fed-loading">Could not load data.</div>';
   }
 }
 
-function renderMacro(events) {
-  const el = document.getElementById('fedList');
-  if (!events.length) { el.innerHTML = '<div class="fed-loading">No upcoming macro events found.</div>'; return; }
+function renderIndicators(events) {
+  const grid = document.getElementById('indicatorGrid');
+  // One card per unique indicator type (first occurrence carries the readings + desc)
+  const seen = new Set();
+  const indicators = events.filter(e => {
+    if (seen.has(e.name)) return false;
+    seen.add(e.name);
+    return true;
+  });
 
-  el.innerHTML = events.map((e, i) => {
-    const stats = [
-      e.previous != null ? `<span class="fed-stat">Last <strong>${e.previous}</strong></span>`   : '',
-      e.prior    != null ? `<span class="fed-stat">Prior <strong>${e.prior}</strong></span>`     : '',
-    ].filter(Boolean).join('');
+  if (!indicators.length) { grid.innerHTML = '<div class="fed-loading">No data.</div>'; return; }
 
-    return `
-    <div class="fed-item" onclick="toggleFed(this)">
-      <div class="fed-row">
-        <div class="fed-date">${e.date}</div>
-        <div class="fed-icon">${e.icon}</div>
-        <div class="fed-name">${e.name}</div>
+  grid.innerHTML = indicators.map(e => `
+    <div class="ind-card">
+      <div class="ind-header">
+        <div class="ind-name-row">
+          <span class="ind-icon">${e.icon}</span>
+          <span class="ind-name">${e.name}</span>
+        </div>
         <span class="fed-tag ${e.cls}">${e.tag}</span>
-        <span class="fed-chevron">▼</span>
       </div>
-      <div class="fed-detail">
-        ${stats ? `<div class="fed-stat-row">${stats}</div>` : ''}
-        ${e.desc ? `
-          <div class="fed-section-label what">What it is</div>
-          <div class="fed-desc-text">${e.desc}</div>` : ''}
-        ${e.implication ? `
-          <div class="fed-section-label why">Market implication</div>
-          <div class="fed-impl-text">${e.implication}</div>` : ''}
+      <div class="ind-readings">
+        <div class="ind-last">${e.previous ?? '—'}</div>
+        ${e.prior != null ? `
+        <div class="ind-prior-block">
+          <span class="ind-prior-label">Prior</span>
+          <span class="ind-prior-val">${e.prior}</span>
+        </div>` : ''}
       </div>
-    </div>`;
-  }).join('');
+      ${e.desc ? `<div class="ind-desc">${e.desc}</div>` : ''}
+      ${e.implication ? `<div class="ind-impl">${e.implication}</div>` : ''}
+    </div>`).join('');
 }
 
-function toggleFed(el) { el.classList.toggle('open'); }
+function renderUpcoming(events) {
+  const list = document.getElementById('upcomingList');
+  if (!events.length) { list.innerHTML = '<div class="fed-loading">No upcoming releases.</div>'; return; }
+
+  list.innerHTML = events.map(e => `
+    <div class="upcoming-item">
+      <span class="upcoming-date">${e.date}</span>
+      <span class="upcoming-icon">${e.icon}</span>
+      <span class="upcoming-name">${e.name}</span>
+      <span class="fed-tag ${e.cls}">${e.tag}</span>
+    </div>`).join('');
+}
 
 // Copy
 function copyUrl() {

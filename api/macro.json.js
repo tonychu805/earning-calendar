@@ -27,7 +27,9 @@ const FRED_SERIES = {
   "Retail Sales":    { id:"RSAFS",           units:"pc1", suffix:"%" },
 };
 
-// ── In-memory Gemini cache (keyed by "name::date") ────────────────
+// ── In-memory Gemini cache (keyed by event name only) ─────────────
+// Descriptions are per indicator type, not per date — CPI context is
+// the same whether the release is in July or August.
 const descCache = {};
 
 // ── Fetch upcoming release dates for one release ──────────────────
@@ -89,27 +91,29 @@ async function fetchSeriesValues(name, fredKey) {
 
 // ── Gemini descriptions ───────────────────────────────────────────
 async function generateDescriptions(events, seriesData, geminiKey) {
-  const missing = events.filter(e => !descCache[`${e.name}::${e.isoDate}`]);
-  if (!missing.length) return;
+  // Deduplicate by name — one description per indicator type
+  const uniqueNames = [...new Set(events.map(e => e.name))];
+  const missing = uniqueNames.filter(name => !descCache[name]);
+  if (!missing.length) { console.log("All descriptions cached"); return; }
 
-  const eventList = missing.map(e => {
-    const s = seriesData[e.name];
+  const eventList = missing.map(name => {
+    const s = seriesData[name];
     const ctx = s
       ? `last reading: ${s.previous}${s.prior ? `, prior: ${s.prior}` : ""} (as of ${s.date})`
       : "no recent data available";
-    return `- "${e.name}" on ${e.isoDate} — ${ctx}`;
+    return `- "${name}" — ${ctx}`;
   }).join("\n");
 
   const prompt = `You are a senior macro strategist. Today is ${new Date().toISOString().slice(0,10)}.
 
-For each upcoming economic release below, return a JSON array where each object has:
-- "key": "EventName::YYYY-MM-DD"
-- "desc": 1 sentence — what this release measures and what the market is specifically watching given the recent trend.
-- "implication": 1 sentence — the likely directional market reaction (equities, rates, USD) if the print comes in hot vs cold.
+For each economic indicator below, return a JSON array where each object has:
+- "key": the exact indicator name (e.g. "CPI")
+- "desc": 1 sentence — what this release measures and what markets are watching given the recent trend shown.
+- "implication": 1 sentence — likely market reaction (equities, rates, USD) if the next print comes in hotter vs cooler than expected.
 
-Use the recent data provided to make the context specific, not generic. JSON array only, no markdown.
+Be specific to the current data — not generic textbook definitions. JSON array only, no markdown.
 
-Upcoming releases:
+Indicators:
 ${eventList}`;
 
   try {
@@ -149,6 +153,7 @@ ${eventList}`;
         descCache[item.key] = { desc: item.desc, implication: item.implication };
       }
     }
+    console.log(`Gemini: cached ${parsed.length} descriptions`);
     console.log(`Gemini: cached ${parsed.length} descriptions`);
   } catch (err) {
     console.error("Gemini failed:", err.message);
@@ -229,7 +234,7 @@ module.exports = async function handler(req, res) {
 
   const enriched = events.map(e => ({
     ...e,
-    ...(descCache[`${e.name}::${e.isoDate}`] || { desc:"", implication:"" }),
+    ...(descCache[e.name] || { desc:"", implication:"" }),
   }));
 
   return res.status(200).json({ source:"fred+gemini", events: enriched });
