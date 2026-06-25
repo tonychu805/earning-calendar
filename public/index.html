@@ -522,7 +522,8 @@ async function loadMacro() {
   const el = document.getElementById('fedList');
   el.innerHTML = '<div class="fed-loading">Loading macro events…</div>';
   try {
-    const res  = await fetch('/macro.json');
+    const today = new Date().toISOString().slice(0, 10);
+    const res  = await fetch('/macro.json?d=' + today);
     const json = await res.json();
     renderMacro(json.events || []);
   } catch(e) {

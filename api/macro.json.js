@@ -13,8 +13,8 @@ const FRED_RELEASES = [
   { id: 50,  name:"Nonfarm Payrolls", icon:"💼", tag:"jobs",   cls:"tag-jobs" },
   { id: 54,  name:"PCE Inflation",    icon:"📉", tag:"PCE",    cls:"tag-pce"  },
   { id: 53,  name:"GDP",              icon:"📈", tag:"GDP",    cls:"tag-cpi"  },
-  { id: 31,  name:"PPI",              icon:"📊", tag:"PPI",    cls:"tag-cpi"  },
-  { id: 84,  name:"Retail Sales",     icon:"🛒", tag:"Retail", cls:"tag-jobs" },
+  { id: 46,  name:"PPI",              icon:"📊", tag:"PPI",    cls:"tag-cpi"  },
+  { id: 9,   name:"Retail Sales",     icon:"🛒", tag:"Retail", cls:"tag-jobs" },
 ];
 
 
@@ -34,8 +34,6 @@ async function fetchReleaseDates(release, fredKey, from, to) {
   const r    = await fetch(url);
   if (!r.ok) throw new Error(`FRED HTTP ${r.status} for release ${release.id}`);
   const data = await r.json();
-  // DEBUG: log raw response to understand structure
-  if (release.id === 10) console.log("FRED raw (CPI):", JSON.stringify(data).slice(0, 500));
   const dates = (data.release_dates || [])
     .map(d => d.date || d.release_date)
     .filter(d => d >= from && d <= to);
