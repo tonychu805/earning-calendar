@@ -254,26 +254,34 @@
   /* ── Fed dates ── */
   .fed-list { display: flex; flex-direction: column; gap: 8px; }
   .fed-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    font-size: 0.84rem;
-    transition: border-color 0.12s;
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s;
   }
-  .fed-item:hover { border-color: rgba(248,113,113,0.2); }
+  .fed-item:hover { border-color: rgba(248,113,113,0.25); }
+  .fed-item.open  { border-color: rgba(248,113,113,0.25); }
+
+  .fed-row { display: flex; align-items: center; gap: 12px; }
   .fed-date {
     font-family: 'SF Mono','Fira Code',monospace;
     font-size: 0.75rem;
     color: var(--muted);
-    min-width: 58px;
+    min-width: 56px;
     flex-shrink: 0;
   }
   .fed-icon { font-size: 1rem; flex-shrink: 0; }
-  .fed-name { font-weight: 500; flex: 1; }
+  .fed-name { font-weight: 500; font-size: 0.88rem; flex: 1; }
+  .fed-chevron {
+    color: var(--muted);
+    font-size: 0.65rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .fed-item.open .fed-chevron { transform: rotate(180deg); }
+
   .fed-tag {
     font-size: 0.65rem;
     font-weight: 700;
@@ -283,11 +291,50 @@
     border-radius: 5px;
     flex-shrink: 0;
   }
-  .tag-fomc   { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
-  .tag-cpi    { background: rgba(251,191,36,0.1);  color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
-  .tag-jobs   { background: rgba(52,211,153,0.1);  color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
-  .tag-pce    { background: rgba(167,139,250,0.1); color: var(--purple);border: 1px solid rgba(167,139,250,0.2);}
-  .tag-jhole  { background: rgba(96,165,250,0.1);  color: var(--blue);  border: 1px solid rgba(96,165,250,0.2); }
+  .tag-fomc   { background: rgba(248,113,113,0.1); color: var(--red);    border: 1px solid rgba(248,113,113,0.2); }
+  .tag-cpi    { background: rgba(251,191,36,0.1);  color: var(--amber);  border: 1px solid rgba(251,191,36,0.2); }
+  .tag-jobs   { background: rgba(52,211,153,0.1);  color: var(--green);  border: 1px solid rgba(52,211,153,0.2); }
+  .tag-pce    { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.2);}
+  .tag-jhole  { background: rgba(96,165,250,0.1);  color: var(--blue);   border: 1px solid rgba(96,165,250,0.2); }
+
+  .fed-detail {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .fed-item.open .fed-detail { display: block; }
+
+  .fed-stat-row { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+  .fed-stat     { font-size: 0.74rem; color: var(--muted); }
+  .fed-stat strong { color: var(--text); font-weight: 600; }
+
+  .fed-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .fed-section-label.what { color: var(--blue); }
+  .fed-section-label.why  { color: var(--amber); }
+
+  .fed-desc-text {
+    font-size: 0.8rem;
+    color: #8b9cb8;
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }
+  .fed-impl-text {
+    font-size: 0.8rem;
+    color: #8b9cb8;
+    line-height: 1.55;
+    padding: 8px 12px;
+    background: rgba(251,191,36,0.04);
+    border-left: 2px solid rgba(251,191,36,0.3);
+    border-radius: 0 6px 6px 0;
+  }
+  .fed-loading { text-align:center; padding:2rem; color:var(--muted); font-size:0.83rem; }
 
   /* ── Section header ── */
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
@@ -445,23 +492,6 @@ const TICKERS = {
   finance: ["JPM","BAC","WFC","C","GS","MS","AXP","BLK","SCHW","USB","PNC","TFC","COF","V","MA","PYPL","FIS","FI","GPN","ADP","PAYX","PRU","MET","AIG","CB","MMC","AON","ICE","CME","NDAQ"],
 };
 
-const FED_DATES = [
-  { date:"Jul 2",  icon:"💼", name:"Jobs Report (June NFP)",            tag:"jobs",  cls:"tag-jobs" },
-  { date:"Jul 10", icon:"📊", name:"CPI Inflation (June)",              tag:"CPI",   cls:"tag-cpi"  },
-  { date:"Jul 28", icon:"🏛️",  name:"FOMC Meeting Begins",              tag:"FOMC",  cls:"tag-fomc" },
-  { date:"Jul 29", icon:"🏛️",  name:"FOMC Decision & Press Conference", tag:"FOMC",  cls:"tag-fomc" },
-  { date:"Jul 31", icon:"📉", name:"PCE Inflation (June)",              tag:"PCE",   cls:"tag-pce"  },
-  { date:"Aug 7",  icon:"💼", name:"Jobs Report (July NFP)",            tag:"jobs",  cls:"tag-jobs" },
-  { date:"Aug 12", icon:"📊", name:"CPI Inflation (July)",              tag:"CPI",   cls:"tag-cpi"  },
-  { date:"Aug 27", icon:"🏔️",  name:"Jackson Hole Symposium Begins",    tag:"J.Hole",cls:"tag-jhole"},
-  { date:"Aug 29", icon:"🏔️",  name:"Jackson Hole Ends / Fed Chair Speech", tag:"J.Hole",cls:"tag-jhole"},
-  { date:"Aug 29", icon:"📉", name:"PCE Inflation (July)",              tag:"PCE",   cls:"tag-pce"  },
-  { date:"Sep 5",  icon:"💼", name:"Jobs Report (August NFP)",          tag:"jobs",  cls:"tag-jobs" },
-  { date:"Sep 11", icon:"📊", name:"CPI Inflation (August)",            tag:"CPI",   cls:"tag-cpi"  },
-  { date:"Sep 16", icon:"🏛️",  name:"FOMC Meeting Begins",              tag:"FOMC",  cls:"tag-fomc" },
-  { date:"Sep 17", icon:"🏛️",  name:"FOMC Decision & Press Conference", tag:"FOMC",  cls:"tag-fomc" },
-];
-
 // Setup URLs
 const icsUrl = window.location.origin + '/calendar.ics';
 document.getElementById('icsUrl').textContent = icsUrl;
@@ -487,14 +517,52 @@ function renderTickers() {
   document.getElementById('tickerGrid').innerHTML = list.map(t => `<span class="ticker">${t}</span>`).join('');
 }
 
-// Fed dates
-document.getElementById('fedList').innerHTML = FED_DATES.map(e => `
-  <div class="fed-item">
-    <div class="fed-date">${e.date}</div>
-    <div class="fed-icon">${e.icon}</div>
-    <div class="fed-name">${e.name}</div>
-    <span class="fed-tag ${e.cls}">${e.tag}</span>
-  </div>`).join('');
+// Fed dates — fetched live from /macro.json
+async function loadMacro() {
+  const el = document.getElementById('fedList');
+  el.innerHTML = '<div class="fed-loading">Loading macro events…</div>';
+  try {
+    const res  = await fetch('/macro.json');
+    const json = await res.json();
+    renderMacro(json.events || []);
+  } catch(e) {
+    el.innerHTML = '<div class="fed-loading">Could not load macro events.</div>';
+  }
+}
+
+function renderMacro(events) {
+  const el = document.getElementById('fedList');
+  if (!events.length) { el.innerHTML = '<div class="fed-loading">No upcoming macro events found.</div>'; return; }
+
+  el.innerHTML = events.map((e, i) => {
+    const stats = [
+      e.estimate != null ? `<span class="fed-stat">Estimate <strong>${e.estimate}</strong></span>` : '',
+      e.previous  != null ? `<span class="fed-stat">Previous <strong>${e.previous}</strong></span>`  : '',
+    ].filter(Boolean).join('');
+
+    return `
+    <div class="fed-item" onclick="toggleFed(this)">
+      <div class="fed-row">
+        <div class="fed-date">${e.date}</div>
+        <div class="fed-icon">${e.icon}</div>
+        <div class="fed-name">${e.name}</div>
+        <span class="fed-tag ${e.cls}">${e.tag}</span>
+        <span class="fed-chevron">▼</span>
+      </div>
+      <div class="fed-detail">
+        ${stats ? `<div class="fed-stat-row">${stats}</div>` : ''}
+        ${e.desc ? `
+          <div class="fed-section-label what">What it is</div>
+          <div class="fed-desc-text">${e.desc}</div>` : ''}
+        ${e.implication ? `
+          <div class="fed-section-label why">Market implication</div>
+          <div class="fed-impl-text">${e.implication}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleFed(el) { el.classList.toggle('open'); }
 
 // Copy
 function copyUrl() {
@@ -506,6 +574,7 @@ function copyUrl() {
 }
 
 renderTickers();
+loadMacro();
 </script>
 </body>
 </html>

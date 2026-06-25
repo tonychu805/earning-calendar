@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/calendar.ics", "destination": "/api/calendar.ics" }
+    { "source": "/calendar.ics", "destination": "/api/calendar.ics" },
+    { "source": "/macro.json",   "destination": "/api/macro.json"   }
   ]
 }
