@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Earnings & Fed Calendar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080c14;
+    --surface: #0f1623;
+    --surface2: #161e2e;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8edf5;
+    --muted: #5a6a85;
+    --green: #34d399;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --amber: #fbbf24;
+    --red: #f87171;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(96,165,250,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(96,165,250,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 5rem;
+  }
+
+  /* ── Hero ── */
+  .hero { text-align: center; padding-bottom: 3.5rem; }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.2);
+    color: var(--green);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 1.75rem;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.12;
+    background: linear-gradient(140deg, #e8edf5 0%, #93c5fd 55%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 420px;
+    margin: 0 auto 2rem;
+  }
+
+  .stats {
+    display: inline-flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .stat {
+    padding: 0.85rem 1.75rem;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--blue); letter-spacing: -0.02em; }
+  .stat-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-highlight {
+    border-color: rgba(96,165,250,0.2);
+    box-shadow: 0 0 50px rgba(96,165,250,0.05), 0 20px 40px rgba(0,0,0,0.35);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .card-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 4px;
+  }
+
+  .card-title { font-size: 1.05rem; font-weight: 600; }
+  .card-desc  { font-size: 0.83rem; color: var(--muted); margin-top: 3px; }
+
+  /* ── URL + Copy ── */
+  .url-row { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+  .url-box {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 0.7rem 1rem;
+    font-family: 'SF Mono','Fira Code',monospace;
+    font-size: 0.8rem;
+    color: var(--green);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: text;
+    user-select: all;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.7rem 1.1rem;
+    border-radius: 9px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(99,102,241,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(99,102,241,0.4); }
+  .btn-ghost {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.13); }
+
+  .actions { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+
+  /* ── Instructions ── */
+  .instructions {
+    margin-top: 1.25rem;
+    padding: 1rem 1.1rem;
+    background: rgba(251,191,36,0.04);
+    border: 1px solid rgba(251,191,36,0.1);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .inst-title { font-size: 0.75rem; font-weight: 600; color: var(--amber); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
+  .inst-row { display: flex; gap: 8px; margin-top: 5px; align-items: flex-start; }
+  .inst-label {
+    flex-shrink: 0;
+    background: rgba(251,191,36,0.12);
+    color: var(--amber);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-top: 1px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .tab {
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tab.on-tech    { background: rgba(96,165,250,0.1);  border-color: rgba(96,165,250,0.3);  color: var(--blue); }
+  .tab.on-energy  { background: rgba(52,211,153,0.1);  border-color: rgba(52,211,153,0.3);  color: var(--green); }
+  .tab.on-finance { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.3); color: var(--purple); }
+  .tab.on-fed     { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: var(--red); }
+
+  .ticker-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .ticker {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    font-family: 'SF Mono','Fira Code',monospace;
+    color: #8ba9c9;
+    letter-spacing: 0.03em;
+    transition: all 0.12s;
+  }
+  .ticker:hover { border-color: rgba(96,165,250,0.3); color: var(--blue); background: rgba(96,165,250,0.05); }
+
+  /* ── Fed dates ── */
+  .fed-list { display: flex; flex-direction: column; gap: 8px; }
+  .fed-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.84rem;
+    transition: border-color 0.12s;
+  }
+  .fed-item:hover { border-color: rgba(248,113,113,0.2); }
+  .fed-date {
+    font-family: 'SF Mono','Fira Code',monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    min-width: 58px;
+    flex-shrink: 0;
+  }
+  .fed-icon { font-size: 1rem; flex-shrink: 0; }
+  .fed-name { font-weight: 500; flex: 1; }
+  .fed-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+  .tag-fomc   { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .tag-cpi    { background: rgba(251,191,36,0.1);  color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+  .tag-jobs   { background: rgba(52,211,153,0.1);  color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+  .tag-pce    { background: rgba(167,139,250,0.1); color: var(--purple);border: 1px solid rgba(167,139,250,0.2);}
+  .tag-jhole  { background: rgba(96,165,250,0.1);  color: var(--blue);  border: 1px solid rgba(96,165,250,0.2); }
+
+  /* ── Section header ── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+  .section-title  { font-size: 0.9rem; font-weight: 600; }
+  .section-meta   { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    font-size: 0.74rem;
+    color: var(--muted);
+  }
+  footer span { display: flex; align-items: center; gap: 5px; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #152035;
+    border: 1px solid rgba(52,211,153,0.3);
+    color: var(--green);
+    padding: 0.55rem 1.2rem;
+    border-radius: 999px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    transition: transform 0.22s ease;
+    pointer-events: none;
+    z-index: 99;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="live-badge"><span class="live-dot"></span>Live Feed</div>
+    <h1>Earnings &amp; Fed Calendar</h1>
+    <p class="subtitle">Auto-refreshing ICS feed for Tech earnings and key macro events — subscribe once, stays current forever.</p>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="tickerCount">—</div>
+        <div class="stat-label">Tickers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">90</div>
+        <div class="stat-label">Day window</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">24h</div>
+        <div class="stat-label">Refresh</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscribe -->
+  <div class="card card-highlight">
+    <div class="card-top">
+      <div>
+        <div class="card-eyebrow">Subscribe</div>
+        <div class="card-title">Add to Your Calendar</div>
+        <div class="card-desc">Works with Google Calendar, Apple Calendar &amp; Outlook.</div>
+      </div>
+    </div>
+
+    <div class="url-row">
+      <div class="url-box" id="icsUrl"></div>
+      <button class="btn btn-primary" onclick="copyUrl()" id="copyBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-ghost" id="gcalBtn" href="#" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Open in Google Calendar
+      </a>
+      <a class="btn btn-ghost" id="icsDownload" href="#" download="earnings-calendar.ics">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download .ics
+      </a>
+    </div>
+
+    <div class="instructions">
+      <div class="inst-title">How to subscribe</div>
+      <div class="inst-row"><span class="inst-label">Google</span><span>Other calendars → + → From URL → paste → Add calendar</span></div>
+      <div class="inst-row"><span class="inst-label">Mac</span><span>File → New Calendar Subscription → paste URL → Subscribe</span></div>
+      <div class="inst-row"><span class="inst-label">iPhone</span><span>Settings → Calendar → Accounts → Other → Add Subscribed Calendar</span></div>
+    </div>
+  </div>
+
+  <!-- Watchlist -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Watchlist</div>
+      <div class="section-meta" id="sectorMeta"></div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab on-tech"   onclick="filterTab('tech',this)">Semiconductors &amp; Tech</button>
+      <button class="tab"           onclick="filterTab('energy',this)">Energy</button>
+      <button class="tab"           onclick="filterTab('finance',this)">Finance</button>
+    </div>
+
+    <div class="ticker-grid" id="tickerGrid"></div>
+  </div>
+
+  <!-- Fed Dates -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Key Macro Dates</div>
+      <div class="section-meta">Next 90 days</div>
+    </div>
+
+    <div class="fed-list" id="fedList"></div>
+  </div>
+
+  <footer>
+    <span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Auto-refreshes daily
+    </span>
+    <span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Powered by Financial Modeling Prep
+    </span>
+    <span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Next 90 days
+    </span>
+  </footer>
+</div>
+
+<div class="toast" id="toast">✓ Copied to clipboard</div>
+
+<script>
+const TICKERS = {
+  tech: [
+    "NVDA","AVGO","AMD","TSM","ASML","MU","MRVL","SMCI","INTC","QCOM","NXPI","ALGM","PENG","ARM",
+    "AMAT","LRCX","KLAC","ANET","DELL","HPE","VRT","CIEN","COHR","LITE","STX","WDC",
+    "MSFT","GOOGL","AMZN","META","BABA","PLTR","ADBE","SNOW","CRM","NOW","PATH","PANW","CRWD","ACN",
+    "AAPL","TSLA","ORCL","NFLX","IBM","CSCO","TXN","INTU",
+  ],
+  energy: ["XOM","CVX","COP","EOG","SLB","PSX","VLO","MPC","OXY","HES","HAL","BKR","DVN","WMB","KMI","OKE","APA","MRO","CTRA","TRGP","PXD"],
+  finance: ["JPM","BAC","WFC","C","GS","MS","AXP","BLK","SCHW","USB","PNC","TFC","COF","V","MA","PYPL","FIS","FI","GPN","ADP","PAYX","PRU","MET","AIG","CB","MMC","AON","ICE","CME","NDAQ"],
+};
+
+const FED_DATES = [
+  { date:"Jul 2",  icon:"💼", name:"Jobs Report (June NFP)",            tag:"jobs",  cls:"tag-jobs" },
+  { date:"Jul 10", icon:"📊", name:"CPI Inflation (June)",              tag:"CPI",   cls:"tag-cpi"  },
+  { date:"Jul 28", icon:"🏛️",  name:"FOMC Meeting Begins",              tag:"FOMC",  cls:"tag-fomc" },
+  { date:"Jul 29", icon:"🏛️",  name:"FOMC Decision & Press Conference", tag:"FOMC",  cls:"tag-fomc" },
+  { date:"Jul 31", icon:"📉", name:"PCE Inflation (June)",              tag:"PCE",   cls:"tag-pce"  },
+  { date:"Aug 7",  icon:"💼", name:"Jobs Report (July NFP)",            tag:"jobs",  cls:"tag-jobs" },
+  { date:"Aug 12", icon:"📊", name:"CPI Inflation (July)",              tag:"CPI",   cls:"tag-cpi"  },
+  { date:"Aug 27", icon:"🏔️",  name:"Jackson Hole Symposium Begins",    tag:"J.Hole",cls:"tag-jhole"},
+  { date:"Aug 29", icon:"🏔️",  name:"Jackson Hole Ends / Fed Chair Speech", tag:"J.Hole",cls:"tag-jhole"},
+  { date:"Aug 29", icon:"📉", name:"PCE Inflation (July)",              tag:"PCE",   cls:"tag-pce"  },
+  { date:"Sep 5",  icon:"💼", name:"Jobs Report (August NFP)",          tag:"jobs",  cls:"tag-jobs" },
+  { date:"Sep 11", icon:"📊", name:"CPI Inflation (August)",            tag:"CPI",   cls:"tag-cpi"  },
+  { date:"Sep 16", icon:"🏛️",  name:"FOMC Meeting Begins",              tag:"FOMC",  cls:"tag-fomc" },
+  { date:"Sep 17", icon:"🏛️",  name:"FOMC Decision & Press Conference", tag:"FOMC",  cls:"tag-fomc" },
+];
+
+// Setup URLs
+const icsUrl = window.location.origin + '/calendar.ics';
+document.getElementById('icsUrl').textContent = icsUrl;
+document.getElementById('gcalBtn').href = 'https://calendar.google.com/calendar/r?cid=' + encodeURIComponent(icsUrl);
+document.getElementById('icsDownload').href = icsUrl;
+
+// Ticker count
+const total = Object.values(TICKERS).flat().length;
+document.getElementById('tickerCount').textContent = total + '+';
+
+// Ticker filter
+let active = 'tech';
+function filterTab(sector, btn) {
+  active = sector;
+  document.querySelectorAll('.tab').forEach(t => t.className = 'tab');
+  btn.className = 'tab on-' + sector;
+  renderTickers();
+}
+
+function renderTickers() {
+  const list = TICKERS[active];
+  document.getElementById('sectorMeta').textContent = list.length + ' tickers';
+  document.getElementById('tickerGrid').innerHTML = list.map(t => `<span class="ticker">${t}</span>`).join('');
+}
+
+// Fed dates
+document.getElementById('fedList').innerHTML = FED_DATES.map(e => `
+  <div class="fed-item">
+    <div class="fed-date">${e.date}</div>
+    <div class="fed-icon">${e.icon}</div>
+    <div class="fed-name">${e.name}</div>
+    <span class="fed-tag ${e.cls}">${e.tag}</span>
+  </div>`).join('');
+
+// Copy
+function copyUrl() {
+  navigator.clipboard.writeText(icsUrl).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  });
+}
+
+renderTickers();
+</script>
+</body>
+</html>
